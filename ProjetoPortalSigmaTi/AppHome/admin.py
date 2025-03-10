@@ -30,7 +30,7 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Contato)
 class ContatoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'cpf_cnpj_cliente', 'email', 'contato_numero', 'data_contrato', 'tipo')
+    list_display = ('nome', 'cpf_cnpj_cliente', 'email', 'contato_numero', 'tipo')
     search_fields = ('nome', 'tipo', 'email', 'empresa')
     list_filter = ('empresa', 'tipo', 'email')
 
@@ -71,7 +71,7 @@ class ServicoAdmin(ImportExportMixin,admin.ModelAdmin):
 
 @admin.register(Demanda)
 class DemandaAdmin(admin.ModelAdmin):
-    list_display = ('tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao', 'status', 'executor')
+    list_display = ('solicitante','status','tipo', 'descricao_problema', 'servico', 'data_criacao', 'executor')
     list_filter = ('tipo', 'status', 'solicitante', 'servico', 'executor')
     search_fields = ('descricao_problema','descricao_solucao', 'solicitante__nome', 'servico__nome', 'executor')
     ordering = ('data_criacao',)
@@ -94,22 +94,24 @@ class DemandaAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj and not request.user.is_superuser:
-            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao', 'status','descricao_solucao']
+            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao','data_verificacao', 'status','descricao_solucao']
         
         elif not request.user.is_superuser:
-            return ['solicitante', 'status','descricao_solucao', 'data_solucao', 'executor']
+            return ['solicitante', 'status','descricao_solucao', 'data_solucao','data_verificacao', 'executor']
         elif obj and request.user.is_superuser and obj.data_solucao:
-            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'descricao_solucao','data_criacao', 'status','data_solucao','executor']
+            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'descricao_solucao','data_criacao','data_verificacao', 'status','data_solucao','executor']
         
         elif obj and request.user.is_superuser:
-            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao', 'status','data_solucao','executor']
+            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao','data_verificacao', 'status','data_solucao','executor']
         
         elif not obj and request.user.is_superuser:
-            return [ 'status','descricao_solucao', 'data_solucao', 'executor']
+            return [ 'status','descricao_solucao', 'data_solucao','data_verificacao', 'executor']
         return []
     def change_view(self, request, object_id, form_url='', extra_context=None):
         obj = self.get_object(request, object_id)
         if obj and request.user.is_superuser and obj.status == 'Aberto':
+            from django.utils.timezone import now
+            obj.data_verificacao = now()
             obj.status = 'Em Andamento'
             obj.executor = request.user
             obj.save()

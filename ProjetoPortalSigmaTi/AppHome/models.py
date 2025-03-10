@@ -152,6 +152,7 @@ class Demanda(models.Model):
     executor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='demandas_resolvidas', null=True, blank=True)
     descricao_solucao = models.TextField(blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
+    data_verificacao = models.DateTimeField(blank=True, null=True) 
     data_solucao = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
