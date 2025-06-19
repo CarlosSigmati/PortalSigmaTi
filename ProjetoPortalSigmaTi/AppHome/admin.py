@@ -4,6 +4,10 @@ from import_export.admin import ImportExportMixin
 from .models import LinkUtil, Cliente, Contato, Servico, Demanda
 from django.shortcuts import redirect
 from django.contrib import messages
+import requests
+from django.conf import settings
+from django.utils.timezone import now, localtime
+
 
 # Criando um recurso de exportação para o modelo Servico
 class ServicoResource(resources.ModelResource):
@@ -20,13 +24,18 @@ class LinkUtilAdmin(admin.ModelAdmin):
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'cpf_cnpj', 'telefone_cliente', 'email', 'data_contrato', 'tipo')
-    list_filter = ('tipo', 'data_contrato')
+    list_display = ('nome', 'cpf_cnpj', 'telefone_cliente', 'email', 'data_contrato', 'tipo', 'listar_responsaveis')
+    list_filter = ('tipo', 'data_contrato', 'usuarios_responsaveis')
     search_fields = ('nome', 'cpf_cnpj', 'email')
+    filter_horizontal = ('usuarios_responsaveis',)
 
     def telefone_cliente(self, obj):
-        return obj.contato.telefone  # Acessa o telefone do Contato relacionado
+        return obj.contato.telefone  # Puxa o telefone do Contato relacionado
     telefone_cliente.short_description = 'Telefone'
+
+    def listar_responsaveis(self, obj):
+        return ", ".join([user.username for user in obj.usuarios_responsaveis.all()])
+    listar_responsaveis.short_description = 'Responsáveis'
 
 @admin.register(Contato)
 class ContatoAdmin(admin.ModelAdmin):
@@ -69,6 +78,19 @@ class ServicoAdmin(ImportExportMixin,admin.ModelAdmin):
             return ['nome', 'descricao', 'modelo_cobranca','requisitos',]
         return []
 
+def enviar_telegram(texto):
+    url = f'https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage'
+    payload = {
+        'chat_id': settings.TELEGRAM_CHAT_ID,
+        'text': texto
+        #'parse_mode': 'Markdown'  # Permite formatação Markdown
+    }
+    try:
+        response = requests.post(url, data=payload)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao enviar mensagem para o Telegram: {e}")
+
 @admin.register(Demanda)
 class DemandaAdmin(admin.ModelAdmin):
     list_display = ('solicitante','status','tipo', 'descricao_problema', 'servico', 'data_criacao', 'executor')
@@ -77,24 +99,69 @@ class DemandaAdmin(admin.ModelAdmin):
     ordering = ('data_criacao',)
 
     def save_model(self, request, obj, form, change):
-        if not change and not request.user.is_superuser:  # Apenas para não-superusuários
+        novo = not change  # Verifica se é uma criação nova
+
+        if novo and not request.user.is_superuser:  # Se for novo e não for superuser
             obj.solicitante = request.user
+
         super().save_model(request, obj, form, change)
 
-        if obj.descricao_solucao and not obj.data_solucao:  # Preenche automaticamente a data de solução
-            from django.utils.timezone import now
+        # Se o campo de solução for preenchido e a data não, marca como concluído
+        if obj.descricao_solucao and not obj.data_solucao:
             obj.data_solucao = now()
             obj.status = 'Concluído'
             obj.save()
         elif obj.descricao_solucao and obj.data_solucao:
-            from django.utils.timezone import now
             obj.data_solucao = now()
             obj.status = 'Concluído'
             obj.save()
 
+        # Convertendo datas para horário local
+        data_criacao = localtime(obj.data_criacao).strftime('%d/%m/%Y %H:%M')
+        data_verificacao = localtime(obj.data_verificacao).strftime('%d/%m/%Y %H:%M') if obj.data_verificacao else None
+        data_solucao = localtime(obj.data_solucao).strftime('%d/%m/%Y %H:%M') if obj.data_solucao else None
+        ultima_atualizacao = localtime(now()).strftime('%d/%m/%Y %H:%M')
+
+        # ✅ ENVIO PARA TELEGRAM
+        if novo:
+            mensagem = (
+                f"📢 *Nova Demanda Criada!*\n\n"
+                f"🔖 *Tipo:* {obj.tipo}\n"
+                f"👤 *Solicitante:* {obj.solicitante}\n"
+                f"🛠️ *Serviço:* {obj.servico}\n"
+                f"📅 *Data de Abertura:* {data_criacao}\n"
+                f"✅ *Executor:* {obj.executor or 'A definir'}\n"
+                f"\n📝 *Descrição do Problema:*\n{obj.descricao_problema}\n"
+            )
+            enviar_telegram(mensagem)
+
+        elif change:
+            mensagem = (
+                f"🔄 *Demanda Atualizada!*\n\n"
+                f"🔖 *Tipo:* {obj.tipo}\n"
+                f"👤 *Solicitante:* {obj.solicitante}\n"
+                f"🛠️ *Serviço:* {obj.servico}\n"
+                f"📌 *Status Atual:* {obj.status}\n"
+                f"✅ *Executor:* {obj.executor or 'A definir'}\n"
+                f"📅 *Data de Abertura:* {data_criacao}\n"
+            )
+
+            if data_verificacao:
+                mensagem += f"🔎 *Data de Verificação:* {data_verificacao}\n"
+
+            if data_solucao:
+                mensagem += f"✅ *Data de Solução:* {data_solucao}\n"
+
+            mensagem += (
+                f"\n📝 *Descrição do Problema:*\n{obj.descricao_problema}\n"
+                f"\n✅ *Descrição da Solução:*\n{obj.descricao_solucao or 'Ainda não informada.'}\n"
+                f"\n🕒 *Última Atualização:* {ultima_atualizacao}"
+            )
+            enviar_telegram(mensagem)
+
     def get_readonly_fields(self, request, obj=None):
         if obj and not request.user.is_superuser:
-            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao','data_verificacao', 'status','descricao_solucao']
+            return ['tipo', 'descricao_problema', 'solicitante', 'servico', 'data_criacao','data_verificacao', 'status','executor','data_solucao']
         
         elif not request.user.is_superuser:
             return ['solicitante', 'status','descricao_solucao', 'data_solucao','data_verificacao', 'executor']
@@ -109,7 +176,7 @@ class DemandaAdmin(admin.ModelAdmin):
         return []
     def change_view(self, request, object_id, form_url='', extra_context=None):
         obj = self.get_object(request, object_id)
-        if obj and request.user.is_superuser and obj.status == 'Aberto':
+        if obj and obj.status == 'Aberto':
             from django.utils.timezone import now
             obj.data_verificacao = now()
             obj.status = 'Em Andamento'

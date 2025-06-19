@@ -13,7 +13,15 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
+SITE_URL = "http://localhost:8000"
 
+# Seu token do BotFather
+##bot_token voce pega na hora que cria o nome pro bot no telegram
+TELEGRAM_BOT_TOKEN= '7727821745:AAEik7O9gduummp77MVCnPHx-OnSD1SvhK4'
+# ID do chat ou grupo onde o bot vai postar (pegue via getUpdates)
+##chat_id voce pega no telegram em userinfobot your id ao /start, é o id do chat que voce quer enviar a mensagem
+#TELEGRAM_CHAT_ID = '7694232174' # ID do chat pessoal (11) 973698511 
+TELEGRAM_CHAT_ID = '-4891037769'  # ID do grupo SigmaTecnologia_bot
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

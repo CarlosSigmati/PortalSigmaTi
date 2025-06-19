@@ -32,16 +32,28 @@ class Cliente(models.Model):
         ('freelancer', 'Freelancer'),
         ('fixo', 'Fixo (Contrato)')
     ]
+
     nome = models.CharField(max_length=100)
     cpf_cnpj = models.CharField(max_length=18, unique=True)
-    contato = models.ForeignKey(Contato, on_delete=models.CASCADE, null=False, default='')
+    contato = models.ForeignKey('Contato', on_delete=models.CASCADE, null=False, default='')
     email = models.EmailField(unique=True)
     data_contrato = models.DateField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     observacao = models.TextField(blank=True, null=True)
 
+    # ✅ Novo campo: Usuários responsáveis
+    usuarios_responsaveis = models.ManyToManyField(
+        User,
+        blank=True,
+        related_name='clientes_responsaveis',
+        verbose_name='Usuários Responsáveis'
+    )
+
     def __str__(self):
         return self.nome
+
+    def listar_responsaveis(self):
+        return ", ".join([user.username for user in self.usuarios_responsaveis.all()])
 
 class Servico(models.Model):
     CATEGORIAS = [
@@ -128,6 +140,7 @@ class Servico(models.Model):
         return self.nome
 
 class Demanda(models.Model):
+
     CHAMADO = 'Chamado'
     PROJETO = 'Projeto'
     TIPO_CHOICES = [
@@ -166,3 +179,11 @@ class Demanda(models.Model):
 
     def __str__(self):
         return f"{self.tipo} - {self.servico} ({self.status})"
+    
+#armazenando logs de envio de mensagens para o Telegram
+class TelegramLog(models.Model):
+    data_envio = models.DateTimeField(default=now)
+    destinatario = models.CharField(max_length=100)
+    mensagem = models.TextField()
+    sucesso = models.BooleanField(default=True)
+    erro = models.TextField(blank=True, null=True)
