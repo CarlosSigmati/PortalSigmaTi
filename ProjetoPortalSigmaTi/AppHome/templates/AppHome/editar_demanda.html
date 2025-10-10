@@ -1,0 +1,38 @@
+{% extends "AppHome/base.html" %}
+
+{% block title %}Editar Demanda{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Resolver Demanda</h4>
+        </div>
+        <div class="card-body">
+            {% if usuario_pode_alterar  %}
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="descricao_solucao" class="form-label fw-semibold">Descrição da Solução:</label>
+                    <textarea id="descricao_solucao" name="descricao_solucao" rows="5" class="form-control" placeholder="Descreva a solução aplicada..." required>{{ demanda.descricao_solucao }}</textarea>
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'AppHome:detalhar_demanda' demanda.id %}" class="btn btn-outline-secondary">Voltar</a>
+                    <button type="submit" class="btn btn-success px-4">💾 Salvar Alterações</button>
+                    {% if user.is_superuser %}
+                    <a class="btn btn-danger" href="{% url 'AppHome:excluir_demanda' demanda.id %}">Excluir</a>
+                    {% endif %}
+                </div>
+                
+            </form>
+            {% else %}
+                <div class="alert alert-warning">
+                    <strong>Aviso:</strong> Você não tem permissão para editar esta demanda.
+                </div>
+                <a href="{% url 'AppHome:listar_demandas' %}" class="btn btn-outline-secondary mt-3">Voltar</a>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

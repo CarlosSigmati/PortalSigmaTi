@@ -1,0 +1,100 @@
+{% extends "AppHome/base.html" %}
+{% block title %}Minhas Demandas{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-light">Minhas Demandas</h2>
+        <a class="btn btn-outline-success shadow-sm" href="{% url 'AppHome:nova_demanda' %}">
+            + Nova Demanda
+        </a>
+    </div>
+
+    {% if demandas %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for demanda in demandas %}
+        <div class="col">
+            <div class="card h-100 text-light border-0 shadow"
+                style="background-color: 
+                        {% if demanda.status == 'aberto' %}#a83232
+                        {% elif demanda.status == 'Em Andamento' %}#b38f32
+                        {% elif demanda.status == 'Concluído' %}#32a852
+                        {% else %}#2f2f2f{% endif %};">
+                
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title fw-bold">{{ demanda.servico.nome }}</h5>
+                        <span class="badge px-3 py-2 rounded-pill"
+                            style="background-color: 
+                                    {% if demanda.status == 'aberto' %}#ff6b6b
+                                    {% elif demanda.status == 'Em Andamento' %}#ffd54f
+                                    {% elif demanda.status == 'Concluído' %}#81c784
+                                    {% else %}#9e9e9e{% endif %}; 
+                                    color: #fff;">
+                            {{ demanda.get_status_display }}
+                        </span>
+                    </div>
+
+                    <p class="text-light mb-1">
+                        <strong>Solicitante:</strong> {{ demanda.solicitante.username }}
+                    </p>
+                    <p class="text-light mb-1">
+                        <strong>Executor:</strong> 
+                        {% if demanda.executor %}
+                            {{ demanda.executor.username }}
+                        {% else %}
+                            <span class="fst-italic">Não atribuído</span>
+                        {% endif %}
+                    </p>
+
+                    <p class="text-light mb-1"><strong>Tipo:</strong> {{ demanda.tipo }}</p>
+
+                    <p class="mt-2 text-light">
+                        <strong>Descrição:</strong><br>
+                        {{ demanda.descricao_problema }}
+                    </p>
+
+                    <p class="text-secondary small mt-3 mb-0">
+                        Criada em {{ demanda.data_criacao|date:"d/m/Y H:i" }}
+                    </p>
+
+                    <div class="text-end mt-3">
+                        <a class="btn btn-outline-primary btn-sm rounded-pill px-3" 
+                        href="{% url 'AppHome:detalhar_demanda' demanda.id %}">
+                            Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-dark border text-center mt-4 text-black" role="alert">
+        Nenhuma demanda encontrada no momento.
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    body {
+        background-color: #161616;
+    }
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    }
+    a.btn-outline-primary {
+        border-color: #000000;
+        color: #ffffff;
+    }
+    a.btn-outline-primary:hover {
+        background-color: #000000;
+        color: #fff;
+    }
+</style>
+{% endblock %}

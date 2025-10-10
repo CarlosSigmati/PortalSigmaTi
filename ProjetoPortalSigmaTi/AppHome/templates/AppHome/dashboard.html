@@ -1,0 +1,187 @@
+{% extends "AppHome/base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2 class="mb-4 text-white">Dashboard</h2>
+
+    <!-- Cards de resumo -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-primary p-3 h-100">
+                <h6 class="text-muted">Total de Demandas</h6>
+                <p id="total_demandas" class="display-6 fw-bold">{{ total_demandas }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-danger p-3 h-100">
+                <h6 class="text-muted">aberto</h6>
+                <p id="abertas" class="display-6 fw-bold">{{ abertas }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-warning p-3 h-100">
+                <h6 class="text-muted">Em Andamento</h6>
+                <p id="em_andamento" class="display-6 fw-bold">{{ em_andamento }}</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-start border-success p-3 h-100">
+                <h6 class="text-muted">Concluídas</h6>
+                <p id="concluidas" class="display-6 fw-bold">{{ concluidas }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Gráfico de Status -->
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4 h-100">
+                <h5 class="mb-3">Status das Demandas</h5>
+                <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+                    <canvas id="statusChart" style="max-width: 100%; height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demandas Recentes -->
+        <div class="col-md-6">
+            <div class="card shadow-sm p-4 h-100">
+                <h5 class="mb-3">Últimas Demandas</h5>
+                <ul id="ultimas-demandas" class="list-group">
+                    <!-- Itens serão preenchidos via JS -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Serviços -->
+    <div class="row g-4">
+        <div class="col-12">
+            <h5 class="mb-3 text-white">Serviços</h5>
+            <div id="servicos-container" class="row g-3">
+                <!-- Serviços serão preenchidos via JS -->
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['aberto', 'Em Andamento', 'Concluído'],
+        datasets: [{
+            label: 'Demandas',
+            data: [{{ abertas }}, {{ em_andamento }}, {{ concluidas }}],
+            backgroundColor: ['#ff4d4f','#faad14','#52c41a'],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Distribuição das Demandas' }
+        }
+    }
+});
+</script>
+
+<script>
+const updateDashboard = async () => {
+    try {
+        const response = await fetch("{% url 'AppHome:dashboard_data' %}");
+        const data = await response.json();
+
+        // Atualizar cards
+        document.getElementById('total_demandas').textContent = data.total_demandas;
+        document.getElementById('abertas').textContent = data.abertas;
+        document.getElementById('em_andamento').textContent = data.em_andamento;
+        document.getElementById('concluidas').textContent = data.concluidas;
+
+        // Atualizar gráfico
+        statusChart.data.datasets[0].data = [data.abertas, data.em_andamento, data.concluidas];
+        statusChart.update();
+
+        // Atualizar últimas demandas
+        const ul = document.getElementById('ultimas-demandas');
+        ul.innerHTML = '';
+        if(data.demandas_recentes.length === 0){
+            ul.innerHTML = '<li class="list-group-item">Nenhuma demanda recente.</li>';
+        } else {
+            data.demandas_recentes.forEach(d => {
+                const li = document.createElement('li');
+
+                // Definir cor da borda de acordo com o status
+                let borderClass = '';
+                let textColorClass = '';
+                if(d.status === 'aberto'){
+                    borderClass = 'border-start border-danger';
+                    textColorClass = 'text-danger';
+                } else if(d.status === 'Em Andamento'){
+                    borderClass = 'border-start border-warning';
+                    textColorClass = 'text-warning';
+                } else if(d.status === 'Concluído'){
+                    borderClass = 'border-start border-success';
+                    textColorClass = 'text-success';
+                }
+
+                li.className = `list-group-item d-flex justify-content-between align-items-start shadow-sm mb-2 rounded ${borderClass}`;
+                li.innerHTML = `
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">${d['servico__nome']} - ${d.tipo}</div>
+                        <small>Solicitante: ${d['solicitante__username']}</small><br>
+                        <small>Status: <span class="${textColorClass}">${d.status}</span></small><br>
+                        <small>Data: ${new Date(d['data_criacao']).toLocaleString('pt-BR')}</small>
+                    </div>
+                    <a href="/detalhar_demanda/${d.id}/" class="btn btn-sm btn-primary align-self-center">Ver</a>
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        // Atualizar serviços
+        const servicosContainer = document.getElementById('servicos-container');
+        servicosContainer.innerHTML = '';
+        data.servicos.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'col-md-4';
+            div.innerHTML = `
+                <div class="card shadow-sm p-3 h-100 hover-shadow">
+                    <h6>${s.nome}</h6>
+                    <p class="mb-1"><strong>Categoria:</strong> ${s.categoria}</p>
+                    <p class="mb-1"><strong>Modelo de Cobrança:</strong> ${s.modelo_cobranca}</p>
+                    <p class="mb-0"><strong>Status:</strong> ${s.status}</p>
+                </div>
+            `;
+            servicosContainer.appendChild(div);
+        });
+
+    } catch (error) {
+        console.error('Erro ao atualizar dashboard:', error);
+    }
+};
+
+// Atualiza a cada 10 segundos
+setInterval(updateDashboard, 1000);
+updateDashboard();
+</script>
+
+<style>
+body{
+    background-color: #161616;
+}
+.hover-shadow:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}

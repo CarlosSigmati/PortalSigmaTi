@@ -1,0 +1,21 @@
+{% extends "AppHome/base.html" %}
+
+{% block title %}SigmaTI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <div class="card shadow-sm p-4">
+                <h1 class="display-5 fw-bold mb-3">Bem-vindo ao Portal SigmaTI</h1>
+                <p class="lead mb-4">
+                    Acesse as funcionalidades através do menu abaixo. Gerencie demandas, serviços e mantenha o controle de seus projetos com facilidade.
+                </p>
+                <a href="{% url 'AppHome:listar_demandas' %}" class="btn btn-outline-dark btn-lg">
+                    Minhas Demandas
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

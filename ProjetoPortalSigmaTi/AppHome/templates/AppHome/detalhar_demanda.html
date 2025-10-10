@@ -1,0 +1,46 @@
+{% extends "AppHome/base.html" %}
+{% block title %}Detalhes da Demanda{% endblock %}
+{% block content %}
+<h2>Detalhes da Demanda</h2>
+
+<div class="card">
+    <p><strong>Serviço:</strong> {{ demanda.servico.nome }}</p>
+    <p><strong>Tipo:</strong> {{ demanda.tipo }}</p>
+    <p><strong>Status:</strong> {{ demanda.get_status_display }}</p>
+    <p><strong>Descrição do Problema:</strong><br>{{ demanda.descricao_problema }}</p>
+    <p><strong>Descrição da Solução:</strong> 
+        {% if demanda.descricao_solucao %}
+            {{ demanda.descricao_solucao }}
+        {% else %}
+            Não resolvido
+        {% endif %}
+    </p>
+    <p><strong>Data de Verificação:</strong> 
+        {% if demanda.data_verificacao %}
+            {{ demanda.data_verificacao|date:"d/m/Y H:i" }}
+        {% else %}
+            Não verificado
+        {% endif %}
+    </p>
+    <p><strong>Data de Solução:</strong> 
+        {% if demanda.data_solucao %}
+            {{ demanda.data_solucao|date:"d/m/Y H:i" }}
+        {% else %}
+            Não solucionado
+        {% endif %}
+    </p>
+{% if user.is_superuser or usuario_pode_alterar %}
+    <!-- Dados do serviço -->
+    <p><strong>Categoria do Serviço:</strong> {{ demanda.servico.get_categoria_display }}</p>
+    <p><strong>Modelo de Cobrança:</strong> {{ demanda.servico.get_modelo_cobranca_display }}</p>
+    <p><strong>Requisitos:</strong> {{ demanda.servico.get_requisitos_display|default:"Nenhum" }}</p>
+    <p><strong>Ferramentas:</strong> {{ demanda.servico.get_ferramentas_display|default:"Nenhuma" }}</p>
+    <p><strong>Tempo Médio de Execução:</strong> {{ demanda.servico.get_tempo_medio_execucao_display }}</p>
+    <p><strong>Nível de Complexidade:</strong> {{ demanda.servico.get_nivel_complexidade_display }}</p>
+    <p><strong>Status do Serviço:</strong> {{ demanda.servico.get_status_display }}</p>
+
+
+    <a class="btn btn-success" href="{% url 'AppHome:editar_demanda' demanda.id %}">Resolver</a>     
+{% endif %}
+
+{% endblock %}

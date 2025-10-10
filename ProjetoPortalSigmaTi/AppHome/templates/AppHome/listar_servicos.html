@@ -1,0 +1,31 @@
+{% extends "AppHome/base.html" %}
+
+{% block title %}Serviços Disponíveis{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">Serviços Disponíveis</h2>
+
+    {% if servicos %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for servico in servicos %}
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ servico.nome }}</h5>
+                        <p class="card-text">{{ servico.descricao }}</p>
+                    </div>
+                    {% if servico.status %}
+                    <div class="card-footer">
+                        <small class="text-muted">Status: {{ servico.status }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Nenhum serviço cadastrado no momento.</p>
+    {% endif %}
+</div>
+{% endblock %}

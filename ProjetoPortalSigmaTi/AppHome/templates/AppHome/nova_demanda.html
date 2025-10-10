@@ -1,0 +1,65 @@
+{% extends "AppHome/base.html" %}
+
+{% block title %}Nova Demanda{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="shadow-sm p-4 border-0 rounded-4" style="background-color: #ffffff;">
+        <h2 class="mb-4 fw-bold text-dark">Abrir Nova Demanda</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Usuário (visível apenas para administradores) -->
+            {% if user.is_superuser %}
+                {% if usuarios %}
+                <div class="mb-3">
+                    <label for="solicitante" class="form-label fw-semibold text-dark">Solicitante:</label>
+                    <select id="solicitante" name="solicitante" class="form-select" required
+                        style="border-color: #000000; color: #000000; background-color: #ffffff;">
+                        <option value="">Selecione um usuário</option>
+                        {% for usuario in usuarios %}
+                            <option value="{{ usuario.id }}">{{ usuario.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Serviço -->
+            <div class="mb-3">
+                <label for="servico" class="form-label fw-semibold text-dark">Serviço</label>
+                <select id="servico" name="servico" class="form-select" required
+                    style="border-color: #000000; color: #000000; background-color: #ffffff;">
+                    <option value="">Selecione</option>
+                    {% for servico in servicos %}
+                        <option value="{{ servico.id }}">{{ servico.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Tipo -->
+            <div class="mb-3">
+                <label for="tipo" class="form-label fw-semibold text-dark">Tipo</label>
+                <select id="tipo" name="tipo" class="form-select" required
+                    style="border-color: #000000; color: #000000; background-color: #ffffff;">
+                    <option value="Chamado">Chamado</option>
+                    <option value="Projeto">Projeto</option>
+                </select>
+            </div>
+
+            <!-- Descrição do Problema -->
+            <div class="mb-3">
+                <label for="descricao_problema" class="form-label fw-semibold text-dark">Descrição do Problema</label>
+                <textarea id="descricao_problema" name="descricao_problema" class="form-control" rows="5" 
+                    placeholder="Descreva detalhadamente o problema" required
+                    style="border-color: #000000; color: #000000; background-color: #ffffff;"></textarea>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-dark btn-lg">Enviar Demanda</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

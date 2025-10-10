@@ -1,0 +1,12 @@
+{% extends "AppHome/base.html" %}
+{% block title %}Excluir Demanda{% endblock %}
+{% block content %}
+<h2>Excluir Demanda</h2>
+<p>Tem certeza de que deseja excluir a demanda "<strong>{{ demanda.servico.nome }}</strong>"?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+    <a class="btn" href="{% url 'AppHome:listar_demandas' %}">Cancelar</a>
+</form>
+{% endblock %}
