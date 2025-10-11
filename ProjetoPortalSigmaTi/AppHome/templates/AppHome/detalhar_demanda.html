@@ -1,9 +1,9 @@
 {% extends "AppHome/base.html" %}
 {% block title %}Detalhes da Demanda{% endblock %}
 {% block content %}
-<h2>Detalhes da Demanda</h2>
+<h2 class="text-white">Detalhes da Demanda</h2>
 
-<div class="card">
+<div class="card ">
     <p><strong>Serviço:</strong> {{ demanda.servico.nome }}</p>
     <p><strong>Tipo:</strong> {{ demanda.tipo }}</p>
     <p><strong>Status:</strong> {{ demanda.get_status_display }}</p>

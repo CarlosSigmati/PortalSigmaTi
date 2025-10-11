@@ -1,8 +1,8 @@
 {% extends "AppHome/base.html" %}
 {% block title %}Excluir Demanda{% endblock %}
 {% block content %}
-<h2>Excluir Demanda</h2>
-<p>Tem certeza de que deseja excluir a demanda "<strong>{{ demanda.servico.nome }}</strong>"?</p>
+<h2 class="text-white">Excluir Demanda</h2>
+<p class="text-white">Tem certeza de que deseja excluir a demanda "<strong>{{ demanda.servico.nome }}</strong>"?</p>
 
 <form method="post">
     {% csrf_token %}
