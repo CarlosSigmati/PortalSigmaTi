@@ -16,20 +16,16 @@
         {% for demanda in demandas %}
         <div class="col">
             <div class="card h-100 text-light border-0 shadow"
-                style="background-color: 
-                        {% if demanda.status == 'aberto' %}#a83232
-                        {% elif demanda.status == 'Em Andamento' %}#b38f32
-                        {% elif demanda.status == 'Concluído' %}#32a852
-                        {% else %}#2f2f2f{% endif %};">
+                style="background-color: {% if demanda.status == 'aberto' %} #a83232 {% elif demanda.status == 'Em Andamento' %}#b38f32{% elif demanda.status == 'Concluído' %}#32a852{% else %}#2f2f2f{% endif %};">
                 
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h5 class="card-title fw-bold">{{ demanda.servico.nome }}</h5>
                         <span class="badge px-3 py-2 rounded-pill"
                             style="background-color: 
-                                    {% if demanda.status == 'aberto' %}#ff6b6b
-                                    {% elif demanda.status == 'Em Andamento' %}#ffd54f
-                                    {% elif demanda.status == 'Concluído' %}#81c784
+                                    {% if demanda.status == 'aberto' %} #ff6b6b
+                                    {% elif demanda.status == 'Em Andamento' %} #ffd54f
+                                    {% elif demanda.status == 'Concluído' %} #81c784
                                     {% else %}#9e9e9e{% endif %}; 
                                     color: #fff;">
                             {{ demanda.get_status_display }}
@@ -51,7 +47,7 @@
                     <p class="text-light mb-1"><strong>Tipo:</strong> {{ demanda.tipo }}</p>
 
                     <p class="mt-2 text-light">
-                        <strong>Descrição:</strong><br>
+                        <strong>Descrição do Problema:</strong><br>
                         {{ demanda.descricao_problema }}
                     </p>
 
@@ -77,6 +73,21 @@
     {% endif %}
 </div>
 
+<!-- Overlay de Loading -->
+<div id="loading-overlay" style="
+    display:none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+</div>
+
 <style>
     body {
         background-color: #161616;
@@ -97,4 +108,18 @@
         color: #fff;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        // Mostra overlay quando qualquer link for clicado
+        document.querySelectorAll('a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                loadingOverlay.style.display = 'flex';
+            });
+        });
+    });
+</script>
+
 {% endblock %}

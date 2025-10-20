@@ -1,36 +1,61 @@
 {% extends "AppHome/base.html" %}
 {% block title %}Detalhes da Demanda{% endblock %}
-{% block content %}
-<h2 class="text-white">Detalhes da Demanda</h2>
 
-<div class="card ">
+{% block content %}
+<h2 class="text-white mb-4">Detalhes da Demanda</h2>
+
+<div class="card p-4 mb-4" style="background-color:#2f2f2f; color:white;">
     <p><strong>Serviço:</strong> {{ demanda.servico.nome }}</p>
+    <p><strong>Solicitante:</strong> {{ demanda.solicitante.username }}</p>
+    <p><strong>Executor:</strong> 
+        {% if demanda.executor %}
+            {{ demanda.executor.username }}
+        {% else %}
+            <span class="fst-italic">Não atribuído</span>
+        {% endif %}
+    </p>
     <p><strong>Tipo:</strong> {{ demanda.tipo }}</p>
-    <p><strong>Status:</strong> {{ demanda.get_status_display }}</p>
+    <p><strong>Status:</strong> 
+        <span class="{% if demanda.status == 'Aberto' %}text-danger{% elif demanda.status == 'Em Andamento' %}text-warning{% elif demanda.status == 'Concluído' %}text-success{% endif %}">
+            {{ demanda.get_status_display }}
+        </span>
+    </p>
     <p><strong>Descrição do Problema:</strong><br>{{ demanda.descricao_problema }}</p>
     <p><strong>Descrição da Solução:</strong> 
         {% if demanda.descricao_solucao %}
             {{ demanda.descricao_solucao }}
         {% else %}
-            Não resolvido
+            <span class="fst-italic">Não resolvido</span>
         {% endif %}
     </p>
     <p><strong>Data de Verificação:</strong> 
         {% if demanda.data_verificacao %}
             {{ demanda.data_verificacao|date:"d/m/Y H:i" }}
         {% else %}
-            Não verificado
+            <span class="fst-italic">Não verificado</span>
         {% endif %}
     </p>
     <p><strong>Data de Solução:</strong> 
         {% if demanda.data_solucao %}
             {{ demanda.data_solucao|date:"d/m/Y H:i" }}
         {% else %}
-            Não solucionado
+            <span class="fst-italic">Não solucionado</span>
         {% endif %}
     </p>
-{% if user.is_superuser or usuario_pode_alterar %}
-    <!-- Dados do serviço -->
+
+    {% if demanda.tipo == 'Projeto' %}
+    <hr class="border-light">
+    <p><strong>Objetivo:</strong><br>{{ demanda.objetivo }}</p>
+    <p><strong>Escopo:</strong><br>{{ demanda.escopo }}</p>
+    <p><strong>Justificativa:</strong><br>{{ demanda.justificativa }}</p>
+    <p><strong>Riscos:</strong><br>{{ demanda.riscos }}</p>
+    <p><strong>Prazos:</strong> {{ demanda.prazos }}</p>
+    <p><strong>Orçamento:</strong> {{ demanda.orcamento }}</p>
+    <p><strong>Responsáveis:</strong> {{ demanda.responsaveis }}</p>
+    {% endif %}
+
+    {% if user.is_superuser or usuario_pode_alterar %}
+    <hr class="border-light">
     <p><strong>Categoria do Serviço:</strong> {{ demanda.servico.get_categoria_display }}</p>
     <p><strong>Modelo de Cobrança:</strong> {{ demanda.servico.get_modelo_cobranca_display }}</p>
     <p><strong>Requisitos:</strong> {{ demanda.servico.get_requisitos_display|default:"Nenhum" }}</p>
@@ -39,8 +64,40 @@
     <p><strong>Nível de Complexidade:</strong> {{ demanda.servico.get_nivel_complexidade_display }}</p>
     <p><strong>Status do Serviço:</strong> {{ demanda.servico.get_status_display }}</p>
 
+    <a class="btn btn-success" id="btn-resolver" href="{% url 'AppHome:editar_demanda' demanda.id %}">Resolver</a>
+    {% endif %}
+</div>
 
-    <a class="btn btn-success" href="{% url 'AppHome:editar_demanda' demanda.id %}">Resolver</a>     
-{% endif %}
+<!-- Overlay de Loading -->
+<div id="loading-overlay" style="
+    display:none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+</div>
 
+<style>
+    #loading-overlay { display:flex; }
+    .card p { margin-bottom:0.5rem; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const btnResolver = document.getElementById('btn-resolver');
+
+        if (btnResolver) {
+            btnResolver.addEventListener('click', function() {
+                loadingOverlay.style.display = 'flex';
+            });
+        }
+    });
+</script>
 {% endblock %}

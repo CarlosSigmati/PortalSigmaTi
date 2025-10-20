@@ -140,7 +140,7 @@ class Servico(models.Model):
         return self.nome
 
 class Demanda(models.Model):
-
+    # Tipos
     CHAMADO = 'Chamado'
     PROJETO = 'Projeto'
     TIPO_CHOICES = [
@@ -148,6 +148,7 @@ class Demanda(models.Model):
         (PROJETO, 'Projeto'),
     ]
 
+    # Status
     ABERTO = 'Aberto'
     EM_ANDAMENTO = 'Em Andamento'
     CONCLUIDO = 'Concluído'
@@ -157,6 +158,7 @@ class Demanda(models.Model):
         (CONCLUIDO, 'Concluído'),
     ]
 
+    # Campos principais
     solicitante = models.ForeignKey(User, on_delete=models.CASCADE, related_name='demandas_solicitadas')
     servico = models.ForeignKey(Servico, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default=CHAMADO)
@@ -168,7 +170,17 @@ class Demanda(models.Model):
     data_verificacao = models.DateTimeField(blank=True, null=True) 
     data_solucao = models.DateTimeField(blank=True, null=True)
 
+    # 🔹 Campos TAP (Projeto)
+    objetivo = models.TextField(blank=True, null=True)
+    escopo = models.TextField(blank=True, null=True)
+    justificativa = models.TextField(blank=True, null=True)
+    riscos = models.TextField(blank=True, null=True)
+    prazos = models.CharField(max_length=255, blank=True, null=True)
+    orcamento = models.CharField(max_length=255, blank=True, null=True)
+    responsaveis = models.TextField(blank=True, null=True)
+
     def save(self, *args, **kwargs):
+        # Atualiza status automaticamente
         if self.descricao_solucao and not self.data_solucao:
             self.status = self.CONCLUIDO
             self.data_solucao = now()

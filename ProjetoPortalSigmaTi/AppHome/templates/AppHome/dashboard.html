@@ -72,25 +72,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const ctx = document.getElementById('statusChart').getContext('2d');
-const statusChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-        labels: ['aberto', 'Em Andamento', 'Concluído'],
-        datasets: [{
-            label: 'Demandas',
-            data: [{{ abertas }}, {{ em_andamento }}, {{ concluidas }}],
-            backgroundColor: ['#ff4d4f','#faad14','#52c41a'],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom' },
-            title: { display: true, text: 'Distribuição das Demandas' }
+    const statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Aberto', 'Em Andamento', 'Concluído'],
+            datasets: [{
+                label: 'Demandas',
+                data: [{{ abertas }}, {{ em_andamento }}, {{ concluidas }}],
+                backgroundColor: ['#ff4d4f','#faad14','#52c41a'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                title: { display: true, text: 'Distribuição das Demandas' }
+            }
         }
-    }
 });
 </script>
 
@@ -169,8 +169,8 @@ const updateDashboard = async () => {
     }
 };
 
-// Atualiza a cada 10 segundos
-setInterval(updateDashboard, 1000);
+// Atualiza a cada 30 segundos
+setInterval(updateDashboard, 30000);
 updateDashboard();
 </script>
 

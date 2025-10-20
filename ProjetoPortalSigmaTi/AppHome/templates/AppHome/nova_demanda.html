@@ -7,53 +7,123 @@
     <div class="shadow-sm p-4 border-0 rounded-4" style="background-color: #ffffff;">
         <h2 class="mb-4 fw-bold text-dark">Abrir Nova Demanda</h2>
 
+        <!-- Overlay de Carregamento -->
+        <div id="loading-overlay" style="
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        ">
+            <div style="text-align: center; color: #fff;">
+                <div class="spinner-border text-light" role="status" style="width: 4rem; height: 4rem;">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <div class="mt-3">Enviando demanda, aguarde...</div>
+            </div>
+        </div>
+
         <form method="post">
             {% csrf_token %}
 
-            <!-- Usuário (visível apenas para administradores) -->
+            <!-- Usuário (apenas admins) -->
             {% if user.is_superuser %}
                 {% if usuarios %}
-                <div class="mb-3">
+                <div class="mb-5">
                     <label for="solicitante" class="form-label fw-semibold text-dark">Solicitante:</label>
                     <select id="solicitante" name="solicitante" class="form-select" required
                         style="border-color: #000000; color: #000000; background-color: #ffffff;">
-                        <option value="">Selecione um usuário</option>
+                        <option value="">Selecione o usuário responsável pela demanda</option>
                         {% for usuario in usuarios %}
                             <option value="{{ usuario.id }}">{{ usuario.username }}</option>
                         {% endfor %}
                     </select>
+                    <small class="text-muted">Escolha quem está solicitando a demanda para rastreabilidade.</small>
                 </div>
                 {% endif %}
             {% endif %}
 
             <!-- Serviço -->
-            <div class="mb-3">
+            <div class="mb-5">
                 <label for="servico" class="form-label fw-semibold text-dark">Serviço</label>
                 <select id="servico" name="servico" class="form-select" required
                     style="border-color: #000000; color: #000000; background-color: #ffffff;">
-                    <option value="">Selecione</option>
+                    <option value="">Selecione o serviço relacionado à demanda</option>
                     {% for servico in servicos %}
                         <option value="{{ servico.id }}">{{ servico.nome }}</option>
                     {% endfor %}
                 </select>
+                <small class="text-muted">Escolha a área ou serviço responsável por atender a demanda.</small>
             </div>
 
             <!-- Tipo -->
-            <div class="mb-3">
+            <div class="mb-5">
                 <label for="tipo" class="form-label fw-semibold text-dark">Tipo</label>
                 <select id="tipo" name="tipo" class="form-select" required
                     style="border-color: #000000; color: #000000; background-color: #ffffff;">
                     <option value="Chamado">Chamado</option>
-                    <option value="Projeto">Projeto</option>
+                    {% if user.is_superuser %}
+                        <option value="Projeto">Projeto</option>
+                    {% endif %}
                 </select>
+                <small class="text-muted">Escolha "Chamado" para problemas pontuais ou "Projeto" para demandas maiores que precisam de planejamento detalhado.</small>
             </div>
 
             <!-- Descrição do Problema -->
-            <div class="mb-3">
+            <div class="mb-5">
                 <label for="descricao_problema" class="form-label fw-semibold text-dark">Descrição do Problema</label>
                 <textarea id="descricao_problema" name="descricao_problema" class="form-control" rows="5" 
-                    placeholder="Descreva detalhadamente o problema" required
+                    placeholder="Descreva detalhadamente o problema, incluindo impacto, urgência e contexto" required
                     style="border-color: #000000; color: #000000; background-color: #ffffff;"></textarea>
+                <small class="text-muted">Quanto mais detalhado, melhor para que a equipe compreenda a demanda.</small>
+            </div>
+
+            <!-- Campos TAP (aparecem somente quando Tipo = Projeto) -->
+            <div id="tap-fields" style="display:none;">
+
+                <div class="mb-5">
+                    <label for="objetivo" class="form-label fw-semibold text-dark">Objetivo</label>
+                    <textarea id="objetivo" name="objetivo" class="form-control" rows="5" placeholder="Ex.: Implantar controle de estoque integrado para reduzir perdas" style="border-color: #000000; color: #000000; background-color: #ffffff;" ></textarea>
+                    <small class="text-muted">Descreva o resultado que se espera alcançar com o projeto.</small>
+                </div>
+
+                <div class="mb-5">
+                    <label for="escopo" class="form-label fw-semibold text-dark">Escopo</label>
+                    <textarea id="escopo" name="escopo" class="form-control" rows="5" placeholder="Ex.: Abrange cadastro de produtos, movimentação de estoque e relatórios; não inclui integração externa" style="border-color: #000000; color: #000000; background-color: #ffffff;"></textarea>
+                    <small class="text-muted">Defina os limites do projeto, o que será incluído e o que não será feito.</small>
+                </div>
+
+                <div class="mb-5">
+                    <label for="justificativa" class="form-label fw-semibold text-dark">Justificativa</label>
+                    <textarea id="justificativa" name="justificativa" class="form-control" rows="5" placeholder="Ex.: Necessidade de reduzir perdas e melhorar eficiência" style="border-color: #000000; color: #000000; background-color: #ffffff;"></textarea>
+                    <small class="text-muted">Explique por que este projeto é necessário ou quais problemas ele resolve.</small>
+                </div>
+
+                <div class="mb-5">
+                    <label for="riscos" class="form-label fw-semibold text-dark">Riscos</label>
+                    <textarea id="riscos" name="riscos" class="form-control" rows="2" placeholder="Ex.: Atrasos por dependência de fornecedores externos" style="border-color: #000000; color: #000000; background-color: #ffffff;"></textarea>
+                    <small class="text-muted">Liste possíveis riscos que podem impactar o projeto.</small>
+                </div>
+
+                <div class="mb-5">
+                    <label for="prazos" class="form-label fw-semibold text-dark">Prazos</label>
+                    <input type="text" id="prazos" name="prazos" class="form-control" placeholder="Ex.: Início 01/11/2025 – Término 31/12/2025" style="border-color: #000000; color: #000000; background-color: #ffffff;">
+                    <small class="text-muted">Informe datas de início e término ou duração estimada do projeto.</small>
+                </div>
+
+                <div class="mb-5">
+                    <label for="orcamento" class="form-label fw-semibold text-dark">Orçamento</label>
+                    <input type="text" id="orcamento" name="orcamento" class="form-control" placeholder="Ex.: R$ 25.000,00" style="border-color: #000000; color: #000000; background-color: #ffffff;">
+                    <small class="text-muted">Informe o valor estimado necessário para a execução do projeto.</small>
+                </div>
+
+                <div class="mb-5">
+                    <label for="responsaveis" class="form-label fw-semibold text-dark">Responsáveis</label>
+                    <input type="text" id="responsaveis" name="responsaveis" class="form-control" placeholder="Ex.: Carlos Augusto – Analista de TI; Equipe de Infraestrutura" style="border-color: #000000; color: #000000; background-color: #ffffff;">
+                    <small class="text-muted">Liste os responsáveis pelo projeto, incluindo nomes ou equipes envolvidas.</small>
+                </div>
             </div>
 
             <div class="d-grid mt-4">
@@ -62,4 +132,25 @@
         </form>
     </div>
 </div>
+
+<script>
+    const tipoSelect = document.getElementById('tipo');
+    const tapFields = document.getElementById('tap-fields');
+    const form = document.querySelector("form");
+    const loadingOverlay = document.getElementById("loading-overlay");
+
+    // Mostra/oculta campos TAP
+    tipoSelect.addEventListener('change', function() {
+        if (this.value === 'Projeto') {
+            tapFields.style.display = 'block';
+        } else {
+            tapFields.style.display = 'none';
+        }
+    });
+
+    // Mostra overlay de carregamento ao enviar o formulário
+    form.addEventListener("submit", function() {
+        loadingOverlay.style.display = "flex";
+    });
+</script>
 {% endblock %}

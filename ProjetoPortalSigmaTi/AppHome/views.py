@@ -66,10 +66,7 @@ def enviar_telegram(texto):
 # =============================
 @login_required
 def nova_demanda(request):
-    # 🔹 Lista de serviços
     servicos = Servico.objects.all().order_by('nome')
-
-    # 🔹 Lista de usuários apenas para superuser
     usuarios = User.objects.all().order_by('username') if request.user.is_superuser else None
 
     if request.method == 'POST':
@@ -78,7 +75,7 @@ def nova_demanda(request):
         servico_id = request.POST.get('servico')
         servico = get_object_or_404(Servico, id=servico_id)
 
-        # 🔹 Determina o solicitante
+        # Solicitante
         if request.user.is_superuser:
             solicitante_id = request.POST.get('solicitante')
             if not solicitante_id:
@@ -86,10 +83,12 @@ def nova_demanda(request):
                 return redirect('AppHome:nova_demanda')
             solicitante = get_object_or_404(User, id=solicitante_id)
         else:
-            # Usuário comum e staff → automaticamente é o próprio usuário
             solicitante = request.user
+            if tipo == "Projeto":
+                messages.error(request, "Você não tem permissão para criar um Projeto.")
+                return redirect('AppHome:nova_demanda')
 
-        # 🔹 Criação da demanda
+        # Criar demanda
         demanda = Demanda.objects.create(
             solicitante=solicitante,
             tipo=tipo,
@@ -99,29 +98,56 @@ def nova_demanda(request):
             data_criacao=now()
         )
 
-        # 🔹 Envio de mensagem para Telegram
+        # Campos TAP (somente admin e Projeto)
+        if tipo == "Projeto" and request.user.is_superuser:
+            demanda.objetivo = request.POST.get('objetivo')
+            demanda.escopo = request.POST.get('escopo')
+            demanda.justificativa = request.POST.get('justificativa')
+            demanda.riscos = request.POST.get('riscos')
+            demanda.prazos = request.POST.get('prazos')
+            demanda.orcamento = request.POST.get('orcamento')
+            demanda.responsaveis = request.POST.get('responsaveis')
+            demanda.save()
+
+        # 🔹 Formata data de criação
         data_criacao = localtime(demanda.data_criacao).strftime('%d/%m/%Y %H:%M')
-        mensagem = (
-            f"📢 *Nova Demanda Criada!*\n\n"
-            f"🔖 *Tipo:* {demanda.tipo}\n"
-            f"👤 *Solicitante:* {demanda.solicitante}\n"
-            f"🛠️ *Serviço:* {demanda.servico}\n"
-            f"📅 *Data de Abertura:* {data_criacao}\n"
-            f"✅ *Executor:* {demanda.executor or 'A definir'}\n\n"
-            f"📝 *Descrição do Problema:*\n{demanda.descricao_problema}\n"
-        )
+
+        if demanda.tipo == 'Projeto':
+            # Campos adicionais do projeto
+            mensagem = (
+                f"📢 *Novo Projeto Criado!*\n\n"
+                f"🔖 *Tipo:* {demanda.tipo}\n"
+                f"👤 *Solicitante:* {demanda.solicitante}\n"
+                f"🛠️ *Serviço:* {demanda.servico}\n"
+                f"📅 *Data de Abertura:* {data_criacao}\n"
+                f"✅ *Executor:* {demanda.executor or 'A definir'}\n\n"
+                f"📝 *Descrição do Problema:*\n{demanda.descricao_problema}\n\n"
+                f"🎯 *Objetivo:* {demanda.objetivo}\n"
+                f"📌 *Escopo:* {demanda.escopo}\n"
+                f"💡 *Justificativa:* {demanda.justificativa}\n"
+                f"⚠️ *Riscos:* {demanda.riscos}\n"
+                f"⏱️ *Prazos:* {demanda.prazos}\n"
+                f"💰 *Orçamento:* {demanda.orcamento}\n"
+                f"👥 *Responsáveis:* {demanda.responsaveis}\n"
+            )
+        else:
+            # Mensagem padrão para Chamado
+            mensagem = (
+                f"📢 *Nova Demanda Criada!*\n\n"
+                f"🔖 *Tipo:* {demanda.tipo}\n"
+                f"👤 *Solicitante:* {demanda.solicitante}\n"
+                f"🛠️ *Serviço:* {demanda.servico}\n"
+                f"📅 *Data de Abertura:* {data_criacao}\n"
+                f"✅ *Executor:* {demanda.executor or 'A definir'}\n\n"
+                f"📝 *Descrição do Problema:*\n{demanda.descricao_problema}\n"
+            )
+
         enviar_telegram(mensagem)
 
         messages.success(request, "Demanda criada com sucesso!")
         return redirect('AppHome:listar_demandas')
 
-    # 🔹 Contexto do template
-    context = {
-        'servicos': servicos,
-        'usuarios': usuarios,  # None para usuários comuns e staff
-    }
-
-    return render(request, 'AppHome/nova_demanda.html', context)
+    return render(request, "AppHome/nova_demanda.html", {"servicos": servicos, "usuarios": usuarios})
 
 
 
@@ -322,9 +348,12 @@ def registrar_log_telegram(destinatario, mensagem, sucesso=True, erro=None):
 @login_required
 def dashboard(request):
     # Permitir apenas superusuários e membros do grupo "Técnicos"
-    if not (request.user.is_superuser or request.user.groups.filter(name="Técnicos").exists()):
+    is_executor = request.user.groups.filter(name="Técnicos").exists()
+
+    if not (request.user.is_superuser or is_executor):
         messages.warning(request, "Você não tem permissão para acessar o dashboard.")
         return redirect('AppHome:listar_demandas')
+
     total_demandas = Demanda.objects.count()
     abertas = Demanda.objects.filter(status='aberto').count()
     em_andamento = Demanda.objects.filter(status='Em Andamento').count()
@@ -339,6 +368,7 @@ def dashboard(request):
         'concluidas': concluidas,
         'demandas_recentes': demandas_recentes,
         'servicos': servicos,
+        'is_executor': is_executor,  # 👈 Adiciona variável para o template
     }
     return render(request, 'AppHome/dashboard.html', context)
 
