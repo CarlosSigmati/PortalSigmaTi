@@ -5,7 +5,7 @@ app_name = "AppHome"
 
 urlpatterns = [
     # Página inicial opcional (pode redirecionar para listar_demandas)
-    path('', views.home, name='home'),  # agora /AppHome/ funciona
+    path('', views.home, name='AppHome/home'),  # agora /AppHome/ funciona
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dashboard/data/', views.dashboard_data, name='dashboard_data'),
     
@@ -18,6 +18,8 @@ urlpatterns = [
 
     # Listagem de serviços
     path('listar_servicos/', views.listar_servicos, name='listar_servicos'),
-
     path('accounts/logout/', views.logout_get, name='logout_get'),
+
+    
 ]
+

@@ -1,0 +1,137 @@
+{% extends "GameRotina/base_game.html" %}
+{% load static %}
+
+{% block title %}🎮 Dashboard do Jogo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-primary">🎮 Game Rotina</h1>
+        <p class="lead">Transforme suas tarefas diárias em uma aventura!</p>
+    </div>
+
+    <!-- Status do jogador -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body text-center">
+            <h4 class="mb-3">👤 {{ user.username }}</h4>
+            <p><strong>Nível:</strong> <span class="text-primary">{{ player.nivel }}</span></p>
+            <p><strong>Pontos Totais:</strong> <span class="text-success">{{ player.pontos_totais }}</span></p>
+            <p><strong>Streak Atual:</strong> <span class="text-warning">{{ player.streak }}</span> dias 🔥</p>
+
+            <!-- Barra de progresso de nível -->
+            <div class="progress mt-3" style="height: 22px;">
+                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                     role="progressbar"
+                     style="width: {{ porcentagem_xp }}%"
+                     aria-valuenow="{{ player.pontos_totais }}" aria-valuemin="0" aria-valuemax="{{ xp_proximo_nivel }}">
+                    🧩 XP: {{ player.pontos_totais }} / {{ xp_proximo_nivel }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conquistas -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-warning text-dark fw-bold">🏆 Conquistas</div>
+        <div class="card-body">
+            {% if player.badges.all %}
+                {% for badge in player.badges.all %}
+                    <span class="badge bg-warning text-dark fs-6 me-2">{{ badge.icone }} {{ badge.nome }}</span>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Nenhuma conquista ainda. Continue jogando para desbloquear!</p>
+            {% endif %}
+        </div>
+    </div>
+    
+
+    
+
+    <!-- Histórico -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white fw-bold">📅 Histórico de Rotinas</div>
+        <div class="card-body table-responsive">
+            <table class="table table-striped align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Data</th>
+                        <th>Pontos</th>
+                        <th>Tarefas Concluídas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rotina in rotinas %}
+                    <tr>
+                        <!-- Coluna da data e hora -->
+                        <td class="fw-bold text-primary">{{ rotina.data_hora}}</td>
+                        </td>
+
+                        <!-- Pontos -->
+                        <td><span class="text-success fw-bold">{{ rotina.pontos }}</span></td>
+
+                        <!-- Tarefas concluídas -->
+                        <td>
+                            {% if rotina.leitura %}📖{% endif %}
+                            {% if rotina.arte_marcial %}🥋{% endif %}
+                            {% if rotina.limpar_casa %}🧹{% endif %}
+                            {% if rotina.musculacao %}🏋️{% endif %}
+                            {% if rotina.tomar_agua %}💧{% endif %}
+                            {% if rotina.alimentacao_saudavel %}🥗{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted">Nenhuma rotina registrada ainda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- 🎉 Efeito de confete -->
+<script>
+function dispararConfete() {
+    for (let i = 0; i < 120; i++) {
+        const confete = document.createElement('div');
+        confete.classList.add('confete');
+        confete.style.left = Math.random() * window.innerWidth + 'px';
+        confete.style.backgroundColor = `hsl(${Math.random() * 360}, 80%, 60%)`;
+        document.body.appendChild(confete);
+        setTimeout(() => confete.remove(), 3000);
+    }
+}
+
+{% if pontos_ganhos %}
+    document.addEventListener("DOMContentLoaded", () => {
+        dispararConfete();
+    });
+{% endif %}
+</script>
+
+<!-- 💥 Estilo do confete -->
+<style>
+.confete {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: cair 3s ease-in forwards;
+    z-index: 9999;
+}
+@keyframes cair {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+</style>
+
+{% endblock %}

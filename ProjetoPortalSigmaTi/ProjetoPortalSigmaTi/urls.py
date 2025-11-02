@@ -8,5 +8,6 @@ urlpatterns = [
     path('', include('AppHome.urls')),  # inclui as URLs do AppHome
     path('AppHome/', RedirectView.as_view(pattern_name='AppHome:dashboard', permanent=False)),
     path('accounts/', include('django.contrib.auth.urls')),
- 
+
+    path('GameRotina/', include('GameRotina.urls')),  # inclui as URLs do GameRotina
 ]

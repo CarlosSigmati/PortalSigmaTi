@@ -9,6 +9,9 @@ from .models import Servico, Demanda, TelegramLog
 import requests
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
+
 
 def home(request):
     return render(request, 'AppHome/home.html')

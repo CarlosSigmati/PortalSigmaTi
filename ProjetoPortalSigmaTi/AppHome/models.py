@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
-from django.db import models
 from django.utils.timezone import now
+from django.db import models
+from django.conf import settings  # Para vincular ao usuário
+from django.utils import timezone
 
 class LinkUtil(models.Model):
     nome = models.CharField(max_length=100)
@@ -138,6 +140,7 @@ class Servico(models.Model):
 
     def __str__(self):
         return self.nome
+
 
 class Demanda(models.Model):
     # Tipos

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'AppHome',
     'import_export',
+    'GameRotina',
 ]
 
 MIDDLEWARE = [
