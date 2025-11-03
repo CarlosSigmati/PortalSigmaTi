@@ -48,23 +48,15 @@
 }
 
 .mini-jogo {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
 }
 
-.mini-jogo div.input-area {
+.mini-jogo label {
     flex: 1;
-}
-
-.mini-jogo img.preview {
-    width: 90px;
-    height: 90px;
-    border: 2px solid #a87e4a;
-    border-radius: 5px;
-    display: none;
-    object-fit: cover;
+    font-size: 1.1rem;
 }
 </style>
 
@@ -74,78 +66,37 @@
         {% if rotina_hoje.enviado %}
             <p class="alert alert-pergaminho">✅ Você já registrou suas tarefas hoje!</p>
         {% else %}
-            <form id="rotinaForm" method="post" enctype="multipart/form-data">
+            <form method="post">
                 {% csrf_token %}
 
-                <!-- Mini-jogo: Leitura -->
                 <div class="mini-jogo">
-                    <div class="input-area">
-                        <label>📖 Leitura</label>
-                        <button type="button" class="btn btn-pergaminho" onclick="mostrarQuiz()">Responder Quiz</button>
-                        <div id="quiz-leitura" style="display:none; margin-top:10px;">
-                            <p>Qual é o tema do capítulo de hoje?</p>
-                            <input type="text" name="resposta_leitura" class="form-control">
-                            <p class="mt-2">📸 Foto da leitura concluída:</p>
-                            <input type="file" name="foto_leitura" accept="image/*" onchange="previewFoto(event,'preview_leitura','leitura')">
-                            <input type="hidden" name="leitura" id="leitura" value="0">
-                        </div>
-                    </div>
-                    <img id="preview_leitura" class="preview" alt="Pré-visualização">
+                    <label>📖 Leitura</label>
+                    <input type="checkbox" name="leitura" value="1">
                 </div>
 
-                <!-- Mini-jogo: Arte Marcial -->
                 <div class="mini-jogo">
-                    <div class="input-area">
-                        <label>🥋 Arte Marcial</label>
-                        <p>📸 Tire uma foto do treino:</p>
-                        <input type="file" name="foto_arte_marcial" accept="image/*" onchange="previewFoto(event,'preview_arte_marcial','arte_marcial')">
-                        <input type="hidden" name="arte_marcial" id="arte_marcial" value="0">
-                    </div>
-                    <img id="preview_arte_marcial" class="preview" alt="Pré-visualização">
+                    <label>🥋 Arte Marcial</label>
+                    <input type="checkbox" name="arte_marcial" value="1">
                 </div>
 
-                <!-- Mini-jogo: Limpar Casa -->
                 <div class="mini-jogo">
-                    <div class="input-area">
-                        <label>🧹 Limpar Casa</label>
-                        <p>📸 Foto da casa limpa:</p>
-                        <input type="file" name="foto_limpar_casa" accept="image/*" onchange="previewFoto(event,'preview_limpar_casa','limpar_casa')">
-                        <input type="hidden" name="limpar_casa" id="limpar_casa" value="0">
-                    </div>
-                    <img id="preview_limpar_casa" class="preview" alt="Pré-visualização">
+                    <label>🧹 Limpar Casa</label>
+                    <input type="checkbox" name="limpar_casa" value="1">
                 </div>
 
-                <!-- Mini-jogo: Musculação -->
                 <div class="mini-jogo">
-                    <div class="input-area">
-                        <label>🏋️ Musculação</label>
-                        <p>📸 Foto do treino concluído:</p>
-                        <input type="file" name="foto_musculacao" accept="image/*" onchange="previewFoto(event,'preview_musculacao','musculacao')">
-                        <input type="hidden" name="musculacao" id="musculacao" value="0">
-                    </div>
-                    <img id="preview_musculacao" class="preview" alt="Pré-visualização">
+                    <label>🏋️ Musculação</label>
+                    <input type="checkbox" name="musculacao" value="1">
                 </div>
 
-                <!-- Mini-jogo: Água -->
                 <div class="mini-jogo">
-                    <div class="input-area">
-                        <label>💧 Beber Água (2L/dia)</label>
-                        <p>📸 Tire uma foto com seu copo:</p>
-                        <input type="file" name="foto_agua" accept="image/*" onchange="previewFoto(event,'preview_agua','copos_agua')">
-                        <input type="hidden" name="copos_agua" id="copos_agua_input" value="0">
-                    </div>
-                    <img id="preview_agua" class="preview" alt="Pré-visualização">
+                    <label>💧 Beber Água (2L/dia)</label>
+                    <input type="checkbox" name="copos_agua" value="1">
                 </div>
 
-                <!-- Mini-jogo: Alimentação Saudável -->
                 <div class="mini-jogo">
-                    <div class="input-area">
-                        <label>🥗 Alimentação Saudável</label>
-                        <p>📸 Foto da refeição saudável:</p>
-                        <input type="file" name="foto_alimentacao" accept="image/*" onchange="previewFoto(event,'preview_alimentacao','alimentacao_saudavel')">
-                        <input type="hidden" name="alimentacao_saudavel" id="alimentacao_saudavel" value="0">
-                    </div>
-                    <img id="preview_alimentacao" class="preview" alt="Pré-visualização">
+                    <label>🥗 Alimentação Saudável</label>
+                    <input type="checkbox" name="alimentacao_saudavel" value="1">
                 </div>
 
                 <button type="submit" class="btn btn-pergaminho mt-3">✅ Registrar Rotina</button>
@@ -159,52 +110,4 @@
         {% endif %}
     </div>
 </div>
-
-<script>
-function mostrarQuiz() {
-    document.getElementById('quiz-leitura').style.display = 'block';
-}
-
-// Pré-visualização da imagem + marca tarefa como concluída
-function previewFoto(event, previewId, tarefa) {
-    const input = event.target;
-    const preview = document.getElementById(previewId);
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-        }
-        reader.readAsDataURL(input.files[0]);
-        document.getElementById(tarefa).value = 1;
-    } else {
-        preview.src = '';
-        preview.style.display = 'none';
-        document.getElementById(tarefa).value = 0;
-    }
-}
-
-// Enviar somente as tarefas com foto
-document.getElementById('rotinaForm').addEventListener('submit', function(e) {
-    const form = e.target;
-    const fileInputs = form.querySelectorAll('input[type="file"]');
-
-    fileInputs.forEach(input => {
-        if (!input.files.length) {
-            // remove input e seu hidden correspondente se não houver foto
-            const hidden = input.parentElement.querySelector('input[type="hidden"]');
-            if (hidden) hidden.remove();
-            input.remove();
-        }
-    });
-
-    // Se não tiver nenhuma tarefa com foto, alerta e cancela envio
-    const remainingFiles = form.querySelectorAll('input[type="file"]');
-    if (remainingFiles.length === 0) {
-        e.preventDefault();
-        alert("⚠️ Você precisa enviar pelo menos uma tarefa com foto!");
-    }
-});
-</script>
-
 {% endblock %}
