@@ -76,8 +76,10 @@ def jogo(request):
             rotina.user = user
             rotina.data_hora = timezone.now()
             rotina.calcular_pontos()
+            rotina.enviado = True
             rotina.save()
 
+            
             # Atualiza pontos, streak e nível do jogador
             player.pontos_totais += rotina.pontos
             player.atualizar_streak()
