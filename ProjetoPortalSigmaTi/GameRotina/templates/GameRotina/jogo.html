@@ -6,108 +6,181 @@
 {% block content %}
 <style>
 .pergaminho {
-    background: url("{% static 'GameRotina/img/parchment_bg.png' %}") no-repeat center center;
-    background-size: cover;
-    padding: 30px;
-    border: 10px solid #d4b27a;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    font-family: 'Papyrus', 'Cursive', serif;
-    color: #4b3b2a;
+  background: url("{% static 'GameRotina/img/parchment_bg.png' %}") no-repeat center center;
+  background-size: cover;
+  padding: 30px;
+  border: 10px solid #d4b27a;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  font-family: 'Papyrus', 'Cursive', serif;
+  color: #4b3b2a;
+  max-width: 700px;
+  margin: 40px auto;
 }
 
-.pergaminho-header {
-    background-color: rgba(210, 178, 122, 0.9);
-    padding: 10px 20px;
-    font-weight: bold;
-    font-size: 1.2rem;
-    border-radius: 10px;
-    text-align: center;
-    margin-bottom: 15px;
+.camera-box {
+  text-align: center;
+  margin-top: 20px;
+}
+
+#video, #canvas, #previewRef, #previewDeteccao {
+  width: 100%;
+  max-width: 400px;
+  border: 3px solid #a87e4a;
+  border-radius: 10px;
+}
+
+#previewRef, #previewDeteccao {
+  margin-top: 10px;
 }
 
 .btn-pergaminho {
-    background-color: #cfa665;
-    border: 2px solid #a87e4a;
-    color: #3c2f1f;
-    font-weight: bold;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+  background-color: #cfa665;
+  border: 2px solid #a87e4a;
+  color: #3c2f1f;
+  font-weight: bold;
+  border-radius: 8px;
+  padding: 8px 14px;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+  transition: 0.2s;
 }
 
 .btn-pergaminho:hover {
-    background-color: #e0c187;
+  background-color: #e0c187;
 }
 
-.alert-pergaminho {
-    background-color: rgba(210, 178, 122, 0.8);
-    border: 1px solid #a87e4a;
-    color: #3c2f1f;
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-.mini-jogo {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.mini-jogo label {
-    flex: 1;
-    font-size: 1.1rem;
+#status {
+  margin-top: 12px;
+  font-weight: bold;
+  font-size: 1.1em;
 }
 </style>
 
-<div class="card pergaminho shadow-sm mb-5">
-    <div class="card-header pergaminho-header">💼 Complete suas tarefas de hoje</div>
-    <div class="card-body">
-        {% if rotina_hoje.enviado %}
-            <p class="alert alert-pergaminho">✅ Você já registrou suas tarefas hoje!</p>
-        {% else %}
-            <form method="post">
-                {% csrf_token %}
+<div class="camera-box pergaminho">
+  <h5>📸 Capture o item de referência</h5>
 
-                <div class="mini-jogo">
-                    <label>📖 Leitura</label>
-                    <input type="checkbox" name="leitura" value="1">
-                </div>
+  <!-- Câmera -->
+  <video id="video" autoplay></video>
+  <canvas id="canvas" width="400" height="300" style="display:none;"></canvas>
+  <br>
 
-                <div class="mini-jogo">
-                    <label>🥋 Arte Marcial</label>
-                    <input type="checkbox" name="arte_marcial" value="1">
-                </div>
+  <!-- Botões -->
+  <button id="btnCapturar" class="btn btn-pergaminho mt-2">📷 Capturar item</button>
+  <button id="btnVerificar" class="btn btn-pergaminho mt-2">🔍 Procurar item</button>
 
-                <div class="mini-jogo">
-                    <label>🧹 Limpar Casa</label>
-                    <input type="checkbox" name="limpar_casa" value="1">
-                </div>
+  <!-- Preview da referência -->
+  <div id="refContainer" style="display:none;">
+    <h6 style="margin-top:15px;">🧩 Referência salva:</h6>
+    <img id="previewRef" alt="Imagem de referência">
+  </div>
 
-                <div class="mini-jogo">
-                    <label>🏋️ Musculação</label>
-                    <input type="checkbox" name="musculacao" value="1">
-                </div>
+  <!-- Resultado da verificação -->
+  <div id="detContainer" style="display:none;">
+    <h6 style="margin-top:15px;">🟢 Resultado da verificação:</h6>
+    <img id="previewDeteccao" alt="Imagem processada">
+  </div>
 
-                <div class="mini-jogo">
-                    <label>💧 Copos de Água (meta: 8)</label>
-                    <input type="number" name="copos_agua" min="0" max="20" class="form-control" style="width:100px;">
-                </div>
- 
-                <div class="mini-jogo">
-                    <label>🥗 Alimentação Saudável</label>
-                    <input type="checkbox" name="alimentacao_saudavel" value="1">
-                </div>
-
-                <button type="submit" class="btn btn-pergaminho mt-3">✅ Registrar Rotina</button>
-            </form>
-        {% endif %}
-
-        {% if pontos_ganhos %}
-            <div class="alert alert-pergaminho mt-3">
-                💪 Você ganhou <strong>{{ pontos_ganhos }}</strong> pontos hoje! Continue assim!
-            </div>
-        {% endif %}
-    </div>
+  <!-- Status -->
+  <p id="status">⏳ Aguardando...</p>
 </div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statusMsg = document.getElementById('status');
+const previewRef = document.getElementById('previewRef');
+const refContainer = document.getElementById('refContainer');
+const previewDet = document.getElementById('previewDeteccao');
+const detContainer = document.getElementById('detContainer');
+
+let temReferencia = false;
+let imagemCapturada = null;
+
+// === Ativa a câmera ===
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => video.srcObject = stream)
+  .catch(err => {
+    console.error("❌ Erro ao acessar câmera:", err);
+    statusMsg.textContent = "⚠️ Erro ao acessar câmera.";
+  });
+
+// === Captura frame atual ===
+function tirarFoto() {
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg');
+}
+
+// === Capturar imagem de referência ===
+document.getElementById('btnCapturar').addEventListener('click', async () => {
+  imagemCapturada = tirarFoto();
+  statusMsg.textContent = "📤 Enviando imagem de referência...";
+  canvas.style.display = 'block';
+  video.style.display = 'none';
+
+  try {
+    const response = await fetch('/salvar_referencia/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imagem: imagemCapturada })
+    });
+    const result = await response.json();
+
+    if (result.salvo) {
+      statusMsg.textContent = "✅ Item salvo como referência!";
+      temReferencia = true;
+      previewRef.src = imagemCapturada;
+      refContainer.style.display = 'block';
+    } else {
+      statusMsg.textContent = "❌ Erro ao salvar imagem.";
+    }
+  } catch (err) {
+    console.error("Erro:", err);
+    statusMsg.textContent = "⚠️ Falha ao enviar imagem.";
+  }
+});
+
+// === Verificar se o item está presente ===
+document.getElementById('btnVerificar').addEventListener('click', async () => {
+  if (!temReferencia) {
+    statusMsg.textContent = "⚠️ Capture primeiro o item de referência!";
+    return;
+  }
+
+  const frameAtual = tirarFoto();
+  statusMsg.textContent = "🔍 Verificando...";
+
+  try {
+    const response = await fetch('/verificar_item/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imagem: frameAtual })
+    });
+
+    const result = await response.json();
+
+    if (result.erro) {
+      statusMsg.textContent = `❌ Erro: ${result.erro}`;
+      return;
+    }
+
+    if (result.detectado) {
+      const { template_score, orb_matches, faces_count } = result;
+      statusMsg.textContent = `🎯 Detectado! (Template ${template_score.toFixed(2)} / ORB ${orb_matches} / Rostos ${faces_count})`;
+
+      if (result.imagem_resultante_base64) {
+        previewDet.src = result.imagem_resultante_base64;
+        detContainer.style.display = 'block';
+      }
+    } else {
+      statusMsg.textContent = "❌ Item não encontrado.";
+      detContainer.style.display = 'none';
+    }
+
+  } catch (err) {
+    console.error("Erro:", err);
+    statusMsg.textContent = "⚠️ Erro ao verificar imagem.";
+  }
+});
+</script>
 {% endblock %}

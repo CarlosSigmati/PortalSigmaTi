@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Exames</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f6fa;
+      padding: 40px 20px;
+    }
+
+    h2 {
+      font-weight: 700;
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .search-bar .form-control {
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+    }
+
+    .search-bar .btn {
+      border-radius: 0 8px 8px 0;
+    }
+
+    .add-btn {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .card-exame {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      padding: 20px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-exame:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+
+    .card-header {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #0d6efd;
+      margin-bottom: 15px;
+    }
+
+    .card-body p {
+      margin-bottom: 10px;
+      color: #34495e;
+      font-size: 0.95rem;
+    }
+
+    .assinatura {
+      max-height: 80px;
+      object-fit: contain;
+      border-radius: 6px;
+      border: 1px solid #dee2e6;
+    }
+
+    .btn-action {
+      margin-right: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .search-bar .input-group {
+        flex-direction: column;
+      }
+
+      .search-bar .form-control,
+      .search-bar .btn {
+        width: 100%;
+        margin-bottom: 8px;
+        border-radius: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 1200px;">
+    <h2>📋 Dashboard de Exames</h2>
+
+    <!-- Barra de Pesquisa -->
+    <form method="get" class="mb-4 d-flex justify-content-center search-bar">
+      <div class="input-group" style="max-width: 480px;">
+        <input 
+          type="text" 
+          name="search" 
+          class="form-control"
+          placeholder="Buscar por nome do paciente..."
+          value="{{ search }}"
+        >
+        <button class="btn btn-primary" type="submit">🔎 Buscar</button>
+      </div>
+    </form>
+
+    <!-- Botão adicionar -->
+    <div class="add-btn">
+      <a href="{% url 'Exames:anamnese' %}" class="btn btn-success btn-lg shadow-sm">
+        ➕ Adicionar Nova Anamnese
+      </a>
+    </div>
+
+    {% if exames %}
+      <div class="row g-4">
+        {% for exame in exames %}
+          <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="card-exame">
+              <div class="card-header">
+                {{ exame.nome }}
+              </div>
+              <div class="card-body text-center">
+                <p><strong>ID:</strong> {{ exame.id }}</p>
+                <p><strong>Data:</strong> {{ exame.data_envio|date:"d/m/Y H:i" }}</p>
+                <p>
+                  {% if exame.assinatura_paciente %}
+                    <img src="{{ exame.assinatura_paciente.url }}" alt="Assinatura" class="assinatura">
+                  {% else %}
+                    <span class="text-muted">Sem assinatura</span>
+                  {% endif %}
+                </p>
+                <div class="d-flex justify-content-center mt-3">
+                  <form method="post" action="{% url 'Exames:excluir_exame' exame.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm btn-action">🗑 Excluir</button>
+                  </form>
+                  <button onclick="window.open('{% url 'Exames:imprimir_exame' exame.id %}', '_blank')" class="btn btn-secondary btn-sm btn-action">
+                    🖨 Imprimir
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info text-center mt-4">
+        Nenhum exame encontrado.
+      </div>
+    {% endif %}
+  </div>
+</body>
+</html>

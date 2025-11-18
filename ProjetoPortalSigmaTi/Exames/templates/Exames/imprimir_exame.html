@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Exame - {{ exame.nome }}</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      line-height: 1.6;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .section {
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fdfdfd;
+    }
+
+    .section h3 {
+      margin-top: 0;
+      background: #eee;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .assinatura img {
+      width: 250px;
+      margin-top: 10px;
+      border: 1px solid #999;
+      padding: 5px;
+      border-radius: 5px;
+    }
+
+    @media print {
+      body {
+        padding: 10px;
+      }
+      .section {
+        border: none;
+        background: none;
+      }
+      h3 {
+        background: none;
+      }
+    }
+  </style>
+</head>
+
+<body onload="window.print()">
+  <h2>📄 Ficha de Anamnese</h2>
+
+  <!-- Dados do registro -->
+  <div class="section">
+    <p><strong>Nome do Paciente:</strong> {{ exame.nome }}</p>
+    <p><strong>Data do Registro:</strong> {{ exame.data_envio|date:"d/m/Y H:i" }}</p>
+  </div>
+  <hr>
+  <!-- DADOS PESSOAIS -->
+  <div class="section">
+    <h3>🧍 Dados Pessoais</h3>
+
+    <p><strong>Data de Nascimento:</strong> {{ exame.data_nascimento }}</p>
+    <p><strong>Idade:</strong> {{ exame.idade }}</p>
+    <p><strong>Sexo:</strong> {{ exame.get_sexo_display }}</p>
+    <p><strong>Estado Civil:</strong> {{ exame.estado_civil }}</p>
+    <p><strong>Endereço:</strong> {{ exame.endereco }}</p>
+    <p><strong>Bairro:</strong> {{ exame.bairro }}</p>
+    <p><strong>Cidade:</strong> {{ exame.cidade }}</p>
+    <p><strong>Telefone:</strong> {{ exame.telefone }}</p>
+    <p><strong>E-mail:</strong> {{ exame.email }}</p>
+    <p><strong>Profissão:</strong> {{ exame.profissao }}</p>
+    <p><strong>Origem/Encaminhamento:</strong> {{ exame.origem_encaminhamento }}</p>
+  </div>
+  <hr>
+  <!-- RESPONSÁVEL -->
+  <div class="section">
+    <h3>👥 Responsável (se menor)</h3>
+
+    <p><strong>Nome:</strong> {{ exame.responsavel_nome }}</p>
+    <p><strong>RG:</strong> {{ exame.responsavel_rg }}</p>
+    <p><strong>CPF:</strong> {{ exame.responsavel_cpf }}</p>
+  </div>
+  <hr>
+  <!-- MOTIVO DA CONSULTA -->
+  <div class="section">
+    <h3>📌 Motivo da Consulta</h3>
+
+    <p><strong>Motivo da Consulta:</strong><br>{{ exame.motivo_consulta }}</p>
+    <p><strong>Tempo do Problema:</strong> {{ exame.tempo_problema }}</p>
+    <p><strong>Fez tratamento:</strong> {{ exame.fez_tratamento|yesno:"Sim,Não" }}</p>
+    <p><strong>Local do tratamento:</strong> {{ exame.tratamento_local }}</p>
+    <p><strong>Expectativas:</strong><br>{{ exame.expectativas }}</p>
+  </div>
+
+  <hr>
+  <!-- HISTÓRICO MÉDICO -->
+  <div class="section">
+    <h3>🩺 Histórico Médico Geral</h3>
+
+    <p><strong>Faz tratamento médico?</strong> {{ exame.tratamento_medico|yesno:"Sim,Não" }}</p>
+    <p><strong>Qual tratamento?</strong><br>{{ exame.tratamento_medico_qual }}</p>
+
+    <p><strong>Usa medicamentos?</strong> {{ exame.usa_medicamentos|yesno:"Sim,Não" }}</p>
+    <p><strong>Quais medicamentos?</strong><br>{{ exame.medicamentos_detalhes }}</p>
+
+    <p><strong>Usa suplementos?</strong> {{ exame.usa_suplementos|yesno:"Sim,Não" }}</p>
+    <p><strong>Quais suplementos?</strong><br>{{ exame.suplementos_quais }}</p>
+
+    <p><strong>Possui alergias?</strong> {{ exame.alergias|yesno:"Sim,Não" }}</p>
+    <p><strong>Quais alergias?</strong><br>{{ exame.alergias_quais }}</p>
+
+    <p><strong>Condições de saúde:</strong><br>{{ exame.condicoes_saude }}</p>
+
+    <p><strong>Data do último exame:</strong> {{ exame.data_ultimo_exame }}</p>
+
+    <p><strong>Já foi hospitalizado?</strong> {{ exame.hospitalizado|yesno:"Sim,Não" }}</p>
+    <p><strong>Detalhes:</strong><br>{{ exame.hospitalizado_detalhes }}</p>
+
+    <p><strong>Fumante?</strong> {{ exame.fumante|yesno:"Sim,Não" }}</p>
+    <p><strong>Quantidade/Tempo:</strong> {{ exame.fumo_quantidade_tempo }}</p>
+
+    <p><strong>Consome álcool?</strong> {{ exame.alcool|yesno:"Sim,Não" }}</p>
+    <p><strong>Com que frequência?</strong> {{ exame.alcool_frequencia }}</p>
+
+    <p><strong>Usa drogas?</strong> {{ exame.drogas|yesno:"Sim,Não" }}</p>
+    <p><strong>Quais/Frequência:</strong><br>{{ exame.drogas_quais_frequencia }}</p>
+  </div>
+  <hr>
+  <!-- ASSINATURAS -->
+  <div class="section">
+    <h3>✍ Assinaturas</h3>
+
+    <p><strong>Assinatura do Paciente:</strong><br>
+    {% if exame.assinatura_paciente %}
+      <img src="{{ exame.assinatura_paciente.url }}" alt="Assinatura do Paciente">
+    {% else %}
+      <em>Não registrada</em>
+    {% endif %}
+    </p>
+
+    <p><strong>Assinatura do Responsável:</strong><br>
+    {% if exame.assinatura_responsavel %}
+      <img src="{{ exame.assinatura_responsavel.url }}" alt="Assinatura do Responsável">
+    {% else %}
+      <em>Não registrada</em>
+    {% endif %}
+    </p>
+  </div>
+
+</body>
+</html>

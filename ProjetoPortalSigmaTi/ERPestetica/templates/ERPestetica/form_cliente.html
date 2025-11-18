@@ -1,0 +1,20 @@
+{% extends "ERPestetica/baseERPestetica.html" %}
+
+{% block title %}{{ acao }} Cliente{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-sm p-4">
+        <h3>{{ acao }} Cliente</h3>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success">{{ acao }}</button>
+                <a href="{% url 'ERPestetica:lista_clientes' %}" class="btn btn-secondary">🔙 Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

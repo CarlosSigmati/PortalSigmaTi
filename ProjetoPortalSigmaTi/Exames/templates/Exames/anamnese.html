@@ -1,0 +1,255 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulário de Anamnese</title>
+
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #eef2f5;
+      margin: 0;
+      padding: 25px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-size: 26px;
+      letter-spacing: 0.5px;
+    }
+
+    /* CARD PRINCIPAL */
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 14px;
+      max-width: 1200px;
+      margin: auto;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      animation: fade 0.4s ease-out;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* GRID DE DUAS COLUNAS */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 30px;
+      margin-bottom: 25px;
+    }
+
+    /* responsivo mobile */
+    @media (max-width: 800px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Estilo dos campos */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fafafa;
+      transition: 0.25s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: #3498db;
+      background: #fff;
+      box-shadow: 0 0 5px rgba(52,152,219,0.4);
+    }
+
+    /* Assinatura */
+    .assinatura-box {
+      margin-top: 40px;
+    }
+
+    .assinatura-box h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    canvas {
+      border: 2px solid #555;
+      border-radius: 8px;
+      background: white;
+      width: 100%;
+      max-width: 520px;
+      height: 210px;
+      margin-top: 8px;
+      touch-action: none;
+    }
+
+    /* Botões */
+    .btn {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: 0.25s;
+    }
+
+    .btn-primary {
+      background: #3498db;
+      color: white;
+      margin-top: 20px;
+    }
+
+    .btn-primary:hover {
+      background: #2179b5;
+    }
+
+    .btn-secondary {
+      background: #7f8c8d;
+      color: white;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: #636e72;
+    }
+
+  </style>
+</head>
+<body>
+
+<h2>🩺 Formulário de Anamnese</h2>
+
+<div class="card">
+
+  <form id="form-anamnese" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- FORMULÁRIO ORGANIZADO EM 2 COLUNAS -->
+    <div class="form-grid">
+      {% for field in form %}
+      <div class="form-group">
+        <label>{{ field.label }}</label>
+        {{ field }}
+
+        {% if field.errors %}
+        <small style="color:#e74c3c;">{{ field.errors }}</small>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ASSINATURA -->
+    <div class="assinatura-box">
+      <h3>Assinatura do Paciente</h3>
+      <canvas id="canvas"></canvas>
+
+      <button type="button" class="btn btn-secondary" id="limpar">Limpar Assinatura</button>
+    </div>
+
+    <input type="hidden" name="assinatura" id="assinatura">
+
+    <button type="submit" class="btn btn-primary">Enviar Formulário</button>
+
+  </form>
+
+</div>
+
+<!-- SCRIPT -->
+<script>
+  const canvas = document.getElementById("canvas");
+  canvas.width = 520;
+  canvas.height = 210;
+  const ctx = canvas.getContext("2d");
+
+  let desenhando = false;
+
+  function desenhar(x, y) {
+    if (!desenhando) return;
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#000";
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  canvas.addEventListener("mousedown", (e) => {
+    desenhando = true;
+    ctx.beginPath();
+    ctx.moveTo(e.offsetX, e.offsetY);
+  });
+
+  canvas.addEventListener("mouseup", () => desenhando = false);
+  canvas.addEventListener("mousemove", (e) => desenhar(e.offsetX, e.offsetY));
+
+  /* TOUCH */
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    desenhando = true;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+  });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (!desenhando) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    desenhar(touch.clientX - rect.left, touch.clientY - rect.top);
+  });
+
+  canvas.addEventListener("touchend", () => desenhando = false);
+
+  document.getElementById("limpar").addEventListener("click", () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+
+  document.getElementById("form-anamnese").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const assinatura = canvas.toDataURL("image/png");
+    if (assinatura.length < 800) {
+      alert("⚠️ Por favor, faça a assinatura antes de enviar.");
+      return;
+    }
+
+    document.getElementById("assinatura").value = assinatura;
+
+    const formData = new FormData(e.target);
+    const response = await fetch("", { method: "POST", body: formData });
+    const result = await response.json();
+
+    alert(result.mensagem);
+    if (result.status === "ok") {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      e.target.reset();
+    }
+  });
+</script>
+
+</body>
+</html>

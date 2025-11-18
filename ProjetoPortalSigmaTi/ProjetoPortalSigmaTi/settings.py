@@ -59,6 +59,9 @@ INSTALLED_APPS = [
     'AppHome',
     'import_export',
     'GameRotina',
+    'ERPestetica',
+    'widget_tweaks',
+    'Exames'
 ]
 
 MIDDLEWARE = [
