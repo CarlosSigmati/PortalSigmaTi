@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
-
+from django.contrib.auth.models import User
 
 
 class HorarioFuncionamento(models.Model):
@@ -43,7 +43,8 @@ class Loja(models.Model):
 
 class Profissional(models.Model):
     loja = models.ForeignKey(Loja, on_delete=models.CASCADE, related_name="profissionais")
-    nome = models.CharField(max_length=120)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
+    nome = models.CharField(max_length=100)
     telefone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
 

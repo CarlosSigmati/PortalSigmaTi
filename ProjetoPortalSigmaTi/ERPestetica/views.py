@@ -11,9 +11,9 @@ from datetime import datetime, timedelta, time
 from .models import Agendamento, HorarioFuncionamento, Loja, Profissional, Servico
 from django.utils.timezone import make_aware, is_naive, get_current_timezone
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
-
-
+@login_required
 def horarios_disponiveis(request):
     from django.http import JsonResponse
     from django.utils.timezone import make_aware, get_current_timezone, localtime, is_naive
@@ -76,7 +76,7 @@ def horarios_disponiveis(request):
 
 
 # Funções auxiliares
-
+@login_required
 def gerar_intervalos(data, abertura, fechamento, duracao):
     tz = timezone.get_current_timezone()
     inicio = make_aware(datetime.combine(data, abertura), tz)
@@ -91,12 +91,14 @@ def gerar_intervalos(data, abertura, fechamento, duracao):
 
     return horarios
 
+@login_required
 def lista_clientes(request):
     clientes = Cliente.objects.all()  # pega todos os clientes
     return render(request, "ERPestetica/lista_clientes.html", {"clientes": clientes})
 # Editar cliente
 
 # Criar cliente
+@login_required
 def criar_cliente(request):
     if request.method == "POST":
         form = ClienteForm(request.POST)
@@ -108,6 +110,7 @@ def criar_cliente(request):
         form = ClienteForm()
     return render(request, "ERPestetica/form_cliente.html", {"form": form, "acao": "Criar"})
 
+@login_required
 def editar_cliente(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == "POST":
@@ -121,6 +124,7 @@ def editar_cliente(request, pk):
     return render(request, "ERPestetica/form_cliente.html", {"form": form, "acao": "Editar"})
 
 # Excluir cliente
+@login_required
 def excluir_cliente(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == "POST":
@@ -129,81 +133,91 @@ def excluir_cliente(request, pk):
         return redirect("ERPestetica:lista_clientes")
     return render(request, "ERPestetica/confirmar_exclusao.html", {"cliente": cliente})
 
-
+@login_required
 def criar_agendamento(request):
+    # PROFISSIONAL LOGADO
+    try:
+        profissional_logado = Profissional.objects.get(user=request.user)
+    except Profissional.DoesNotExist:
+        messages.error(request, "Seu usuário não está vinculado a nenhum profissional.")
+        return redirect("/ERPestetica/")
+
+    loja_padrao = profissional_logado.loja  # <<< A LOJA AUTOMÁTICA ESTÁ AQUI!
+
     if request.method == "POST":
-        loja_id = request.POST.get("loja")
+
+        # Converte data + hora selecionados
         data = request.POST.get("data")
         hora = request.POST.get("data_hora")
 
-        # Monta o campo data_hora completo no formato ISO
         if data and hora:
             request.POST = request.POST.copy()
             request.POST["data_hora"] = f"{data}T{hora}"
 
-        form = AgendamentoForm(request.POST)
+        form = AgendamentoForm(request.POST, profissional=profissional_logado)
 
         if form.is_valid():
             agendamento = form.save(commit=False)
 
-            # Tornar data_hora timezone-aware
+            # PROFISSIONAL DEFINIDO AUTOMATICAMENTE
+            agendamento.profissional = profissional_logado
+
+            # LOJA DEFINIDA AUTOMATICAMENTE
+            agendamento.loja = loja_padrao   # <<< AQUI RESOLVE TUDO!
+
+            # Data/Hora timezone-aware
             data_hora = form.cleaned_data["data_hora"]
             if is_naive(data_hora):
                 data_hora = make_aware(data_hora)
             agendamento.data_hora = data_hora
 
-            # Calcula duração total dos serviços
+            # Calcula duração total
             servicos_ids = request.POST.getlist("servicos")
             servicos = Servico.objects.filter(id__in=servicos_ids)
             duracao_total = sum(s.duracao_minutos for s in servicos)
             fim_novo = data_hora + timedelta(minutes=duracao_total)
 
-            # Recupera agendamentos do mesmo dia para o mesmo profissional
+            # Conflitos
             ag_prof = Agendamento.objects.filter(
-                profissional=agendamento.profissional,
+                profissional=profissional_logado,
                 data_hora__date=data_hora.date()
             )
 
-            # Verifica conflitos com o profissional
-            def tem_conflito_profissional(ag_list, inicio, fim):
+            def tem_conflito(ag_list, inicio, fim):
                 for ag in ag_list:
                     ag_inicio = ag.data_hora
-                    ag_fim = ag_inicio + timedelta(minutes=sum(s.duracao_minutos for s in ag.servicos.all()))
+                    ag_fim = ag_inicio + timedelta(
+                        minutes=sum(s.duracao_minutos for s in ag.servicos.all())
+                    )
                     if inicio < ag_fim and fim > ag_inicio:
                         return True
                 return False
 
-            if tem_conflito_profissional(ag_prof, data_hora, fim_novo):
-                mensagem = "❌ Este profissional já está ocupado neste horário."
-                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                    return JsonResponse({"erro": mensagem})
-                else:
-                    messages.error(request, mensagem)
-                    return redirect("/ERPestetica/")
+            if tem_conflito(ag_prof, data_hora, fim_novo):
+                msg = "❌ Você já possui um atendimento nesse horário."
+                messages.error(request, msg)
+                return redirect("/ERPestetica/")
 
-            # Salva agendamento
             agendamento.save()
             form.save_m2m()
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse({"sucesso": True})
-            else:
-                messages.success(request, "✅ Agendamento criado com sucesso!")
-                return redirect("/ERPestetica/")
+            messages.success(request, "✅ Agendamento criado com sucesso!")
+            return redirect("/ERPestetica/")
 
         else:
-            print("⚠️ Erros no formulário:", form.errors.as_json())
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse({
-                    "erro": "⚠️ Dados inválidos. Verifique os campos.",
-                    "detalhes": form.errors
-                })
+            print("⚠️ Erros:", form.errors)
 
-    # GET: exibe formulário
-    form = AgendamentoForm()
-    return render(request, "ERPestetica/criar_agendamento.html", {"form": form})
+    # GET — abre o formulário
+    form = AgendamentoForm(profissional=profissional_logado)
+
+    return render(request, "ERPestetica/criar_agendamento.html", {
+        "form": form,
+        "profissional": profissional_logado,
+        "loja": loja_padrao   # para exibir na tela se quiser
+    })
 
 
+@login_required
 def lista_agendamentos(request):
     agendamentos = Agendamento.objects.all()
     profissionais = Profissional.objects.all()
@@ -223,10 +237,12 @@ def lista_agendamentos(request):
         "profissionais": profissionais
     })
 
+@login_required
 def detalhe_agendamento(request, pk):
     agendamento = get_object_or_404(Agendamento, pk=pk)
     return render(request, "ERPestetica/detalhe_agendamento.html", {"agendamento": agendamento})
 
+@login_required
 def alterar_status(request, pk):
 
     agendamento = get_object_or_404(Agendamento, pk=pk)
@@ -241,7 +257,7 @@ def alterar_status(request, pk):
 
 from django.http import JsonResponse
 from .models import Profissional
-
+@login_required
 def servicos_por_profissional(request):
     profissional_id = request.GET.get("profissional_id")
 

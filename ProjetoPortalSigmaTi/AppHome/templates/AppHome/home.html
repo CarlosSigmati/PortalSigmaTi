@@ -1,4 +1,5 @@
 {% extends "AppHome/base.html" %}
+{% load verifica_grupo %}
 
 {% block title %}SigmaTI{% endblock %}
 
@@ -7,23 +8,39 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 text-center">
             <div class="card shadow-sm p-4">
+
                 <h1 class="display-5 fw-bold mb-3">Bem-vindo ao Portal SigmaTI</h1>
                 <p class="lead mb-4">
                     Acesse as funcionalidades através do menu abaixo. Gerencie demandas, serviços e mantenha o controle de seus projetos com facilidade.
                 </p>
+
+                <!-- Sempre aparece -->
                 <a href="{% url 'AppHome:listar_demandas' %}" class="btn btn-outline-dark btn-lg">
                     Chamados
                 </a>
                 <br>
-                <a href="{% url 'GameRotina:dashboard_jogo' %}" class="btn btn-outline-dark btn-lg">Ir para o jogo</a>
-                <br>
-                <a href="{% url 'ERPestetica:lista_agendamentos' %}" class="btn btn-outline-dark btn-lg">
-                    ERP Estética
-                </a>
-                <br>
-                <a href="{% url 'Exames:exames_crud' %}" class="btn btn-outline-dark btn-lg">
-                    Exames
-                </a>
+
+                <!-- Se NÃO for profissional -->
+                {% if not request.user|has_group:"Profissional" %}
+                    <a href="{% url 'GameRotina:dashboard_jogo' %}" class="btn btn-outline-dark btn-lg">
+                        Ir para o jogo
+                    </a>
+                    <br>
+
+                    <a href="{% url 'Exames:exames_crud' %}" class="btn btn-outline-dark btn-lg">
+                        Exames
+                    </a>
+                    <br>
+                {% endif %}
+
+                <!-- Somente Profissional vê ERP Estética -->
+                {% if request.user|has_group:"Profissional" %}
+                    <a href="{% url 'ERPestetica:lista_agendamentos' %}" class="btn btn-outline-dark btn-lg">
+                        ERP Estética
+                    </a>
+                    <br>
+                {% endif %}
+
             </div>
         </div>
     </div>

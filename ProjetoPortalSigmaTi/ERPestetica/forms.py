@@ -28,10 +28,29 @@ class AgendamentoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         profissional = kwargs.pop('profissional', None)
+        self.profissional_logado = profissional  # salva para validação depois
+
         super().__init__(*args, **kwargs)
-        # Filtra serviços apenas do profissional, se fornecido
+
         if profissional:
-            self.fields['servicos'].queryset = Servico.objects.filter(ativo=True, profissionais=profissional)
+            # Preenche o campo automaticamente
+            self.fields['profissional'].initial = profissional
+            
+            # Bloqueia edição
+            self.fields['profissional'].disabled = True
+
+            # Filtra serviços do profissional
+            self.fields['servicos'].queryset = Servico.objects.filter(
+                ativo=True,
+                profissionais=profissional
+            )
+
+    def clean_profissional(self):
+        """
+        Garante que o profissional salvo será SEMPRE o logado, 
+        impedindo falsificação de POST.
+        """
+        return self.profissional_logado
 
     def clean(self):
         cleaned_data = super().clean()
